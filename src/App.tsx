@@ -1,19 +1,36 @@
 import React, { useEffect } from 'react'
-import './App.css'
-import axios from 'axios';
+import './style.css'
+import axios, {  AxiosResponse } from 'axios';
+import Cookies from 'js-cookie'
+
+interface jData {
+  num: string
+}
 
 const App: React.FC = () => {
-  const [data, setData] = React.useState<any>(null);
+  const [data, setData] = React.useState<string>('');
+
+  let num: string | undefined = Cookies.get('num');
+  if (num === undefined) {
+    num = '0'
+    Cookies.set('num', num, { expires: 7 });
+  }
+
+  const removeCookie: () => void = () => {
+    Cookies.remove('num');
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/');
-        setData(response.data);
-        console.log(response.data);
-        
+        const response: AxiosResponse<jData> = await axios.get('http://localhost:3000/', {
+        params: {
+          num: num
+        }});
+        setData(response.data.num);
+        Cookies.set('num', response.data.num, { expires: 7 });
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Шпэк недоволен:', error);
       }
     };
 
@@ -23,14 +40,11 @@ const App: React.FC = () => {
   return (
     <div>
       {data ? (
-        <ul>
-          {data.map((item: any) => (
-            <li key={item.text}>{item.name}</li>
-          ))}
-        </ul>
+        <p>{data}</p>
       ) : (
         <p>Loading...</p>
       )}
+      <button onClick={removeCookie}>remove</button>
     </div>
   );
 };
